@@ -37,7 +37,11 @@ export default (inputExcelFile, sheetName, outputDir, embedded) => {
 
   // write to files
   fs.emptyDirSync(outputDir);
+    var modelArray = []; 
   _.forEach(modelInfo, (value, key) => {
+    modelArray.push(value);    
+    console.log(`Models: ${modelArray}`);
+
     jsonfile.writeFileSync(path.join(outputDir, `${_.kebabCase(key)}.json`), value);
   });
 };
@@ -53,17 +57,17 @@ function processProperties(value, modelInfo, embedded) {
         description: value2[0].Description,
         type: value2[0].ParentType ? (_.lowerCase(value2[0].ParentType) === 'array') ? 'array' : undefined : value2[0].Type,
         items: processArrayItems(value2[0], modelInfo, embedded),
-        $ref: (!embedded && _.lowerCase(value2[0].ParentType) === 'object') ? `${_.kebabCase(value2[0].Type)}.json#` : undefined,
+        $ref: (!embedded && _.lowerCase(value2[0].ParentType) === 'object') ? _.kebabCase(value2[0].Type) : undefined,
         enum: value2[0].EnumList ? _.chain(value2[0].EnumList).trim('[').trimEnd(']').split(', ').value() : undefined,
         default: value2[0].Default,
         format: value2[0].Format,
         pattern: value2[0].Pattern,
-        maximum: value2[0].Maximum,
-        minimum: value2[0].Minimum,
-        maxLength: value2[0].MaxLength,
-        minLength: value2[0].MinLength,
-        maxItems: value2[0].MaxItems,
-        minItems: value2[0].MinItems,
+        maximum: value2[0].Maximum ? _.toNumber(value2[0].Maximum) : undefined,
+        minimum: value2[0].Minimum ? _.toNumber(value2[0].Minimum) : undefined,
+        maxLength: value2[0].MaxLength ? _.toNumber(value2[0].MaxLength) : undefined,
+        minLength: value2[0].MinLength ? _.toNumber(value2[0].MinLength) : undefined,
+        maxItems: value2[0].MaxItems ? _.toNumber(value2[0].MaxItems) : undefined,
+        minItems: value2[0].MinItems ? _.toNumber(value2[0].MinItems) : undefined
       };
     })
     .value();
@@ -102,7 +106,7 @@ function processArrayItems(value, modelInfo, embedded) {
         required: processRequiredFields(modelInfo[value.Type]),
       };
     }
-    return { $ref: `${_.kebabCase(value.Type)}.json#` };
+    return { $ref: _.kebabCase(value.Type) };
   }
   return undefined;
 }
